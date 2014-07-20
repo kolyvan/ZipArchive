@@ -303,6 +303,34 @@
             
             // check if it contains directory
             NSString * strPath = [NSString stringWithCString:filename encoding:self.stringEncoding];
+            
+            if (!strPath) {
+                
+                // fallback for encoding filename with different encoding
+                
+                // CP 437
+                const NSStringEncoding cp437 = CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingDOSLatinUS);
+                strPath = [NSString stringWithCString:filename encoding:cp437];
+                
+                if (!strPath) {
+                    
+                    // ISO 8859-1
+                    strPath = [NSString stringWithCString:filename encoding:NSWindowsCP1252StringEncoding];
+                    
+                    if (!strPath) {
+                        strPath = [NSString stringWithCString:filename encoding:NSASCIIStringEncoding];
+                        
+                        if (!strPath) {
+                            
+                            [self OutputErrorMessage:@"Error occurs while encoding file name"];
+                            success = NO;
+                            unzCloseCurrentFile( _unzFile );
+                            break;
+                        }
+                    }
+                }
+            }
+            
             BOOL isDirectory = NO;
             if( filename[fileInfo.size_filename-1]=='/' || filename[fileInfo.size_filename-1]=='\\')
                 isDirectory = YES;
